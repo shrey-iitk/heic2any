@@ -24,9 +24,3 @@ If you work with iPhone photos, give it a try. I'd love your feedback and ideas 
 #WebDevelopment #JavaScript #GitHubPages #BuildInPublic #Productivity #OpenSource #Frontend
 
 ---
-
-## Posting tips
-
-- Attach a short screen recording or screenshot of the page converting a photo. Posts with visuals get more reach.
-- For better reach, put the link in the first comment and change the line to "Link in the comments 👇".
-- Tag a friend or two who often deal with HEIC files.
