@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HEIC to JPG Converter</title>
+<script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<style>
+  :root {
+    --bg: #f6f7f9; --card: #fff; --text: #1c1f24; --muted: #6b7280;
+    --accent: #2563eb; --accent-d: #1d4ed8; --border: #d9dde3; --ok: #16a34a; --err: #dc2626;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #14161a; --card: #1e2126; --text: #eceef1; --muted: #9aa1ab; --border: #353a42; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background: var(--bg); color: var(--text); }
+  main { max-width: 860px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { margin: 0 0 4px; font-size: 1.6rem; }
+  p.sub { margin: 0 0 24px; color: var(--muted); }
+  #drop {
+    border: 2px dashed var(--border); border-radius: 14px; background: var(--card);
+    padding: 40px 16px; text-align: center; cursor: pointer; transition: .15s;
+  }
+  #drop.over { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--card)); }
+  #drop strong { display: block; font-size: 1.05rem; margin-bottom: 4px; }
+  #drop span { color: var(--muted); font-size: .9rem; }
+  .controls { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; margin: 20px 0; }
+  .controls label { display: flex; align-items: center; gap: 10px; font-size: .95rem; }
+  input[type=range] { width: 180px; }
+  button {
+    background: var(--accent); color: #fff; border: 0; border-radius: 8px;
+    padding: 9px 16px; font-size: .95rem; cursor: pointer;
+  }
+  button:hover { background: var(--accent-d); }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  button.ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
+  button.ghost:hover { background: var(--card); }
+  .spacer { flex: 1; }
+  #list { display: grid; gap: 10px; }
+  .item {
+    display: grid; grid-template-columns: 64px 1fr auto; gap: 14px; align-items: center;
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px;
+  }
+  .thumb { width: 64px; height: 64px; border-radius: 8px; background: var(--bg) center/cover no-repeat; display: grid; place-items: center; color: var(--muted); font-size: .7rem; }
+  .name { font-weight: 600; word-break: break-all; }
+  .meta { font-size: .85rem; color: var(--muted); }
+  .meta.ok { color: var(--ok); } .meta.err { color: var(--err); }
+  a.dl { background: var(--accent); color: #fff; text-decoration: none; padding: 8px 14px; border-radius: 8px; font-size: .9rem; }
+  a.dl:hover { background: var(--accent-d); }
+  footer { margin-top: 32px; font-size: .85rem; color: var(--muted); text-align: center; }
+</style>
+</head>
+<body>
+<main>
+  <h1>HEIC → JPG Converter</h1>
+  <p class="sub">Convert iPhone photos to JPG right in your browser. Files never leave your device.</p>
+
+  <div id="drop" tabindex="0">
+    <strong>Drop HEIC / HEIF photos here, or click to choose</strong>
+    <span>You can select multiple files at once</span>
+    <input id="file" type="file" accept=".heic,.heif,image/heic,image/heif" multiple hidden>
+  </div>
+
+  <div class="controls">
+    <label>Quality
+      <input id="quality" type="range" min="10" max="100" value="90">
+      <output id="qval">90</output>
+    </label>
+    <span class="spacer"></span>
+    <button id="zipBtn" disabled>Download all (ZIP)</button>
+    <button id="clearBtn" class="ghost" disabled>Clear</button>
+  </div>
+
+  <div id="list"></div>
+  <footer>Works offline-friendly after first load · Hosted on GitHub Pages</footer>
+</main>
+
+<script>
+const drop = document.getElementById('drop');
+const fileInput = document.getElementById('file');
+const list = document.getElementById('list');
+const quality = document.getElementById('quality');
+const qval = document.getElementById('qval');
+const zipBtn = document.getElementById('zipBtn');
+const clearBtn = document.getElementById('clearBtn');
+
+const results = []; // {name, blob}
+
+quality.addEventListener('input', () => qval.textContent = quality.value);
+
+drop.addEventListener('click', () => fileInput.click());
+drop.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') fileInput.click(); });
+['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', e => handleFiles(e.dataTransfer.files));
+fileInput.addEventListener('change', () => { handleFiles(fileInput.files); fileInput.value = ''; });
+
+function fmtSize(b) { return b > 1048576 ? (b / 1048576).toFixed(2) + ' MB' : Math.round(b / 1024) + ' KB'; }
+function isHeic(f) { return /\.(heic|heif)$/i.test(f.name) || /image\/hei[cf]/i.test(f.type); }
+
+async function handleFiles(files) {
+  const q = parseInt(quality.value, 10) / 100;
+  for (const file of Array.from(files)) {
+    if (!isHeic(file)) { addRow(file.name, null, 'Skipped: not a HEIC/HEIF file', 'err'); continue; }
+    const row = addRow(file.name, null, 'Converting…');
+    try {
+      let out = await heic2any({ blob: file, toType: 'image/jpeg', quality: q });
+      if (Array.isArray(out)) out = out[0]; // multi-image HEIC: take first frame
+      const jpgName = file.name.replace(/\.(heic|heif)$/i, '') + '.jpg';
+      const url = URL.createObjectURL(out);
+      results.push({ name: jpgName, blob: out });
+      row.thumb.style.backgroundImage = `url(${url})`;
+      row.thumb.textContent = '';
+      row.meta.textContent = `${fmtSize(file.size)} → ${fmtSize(out.size)}`;
+      row.meta.className = 'meta ok';
+      const a = document.createElement('a');
+      a.className = 'dl'; a.href = url; a.download = jpgName; a.textContent = 'Download JPG';
+      row.action.replaceChildren(a);
+    } catch (err) {
+      row.meta.textContent = 'Failed: ' + (err && err.message ? err.message : 'could not convert');
+      row.meta.className = 'meta err';
+    }
+    updateButtons();
+  }
+}
+
+function addRow(name, thumbUrl, status, cls = '') {
+  const el = document.createElement('div');
+  el.className = 'item';
+  const thumb = document.createElement('div'); thumb.className = 'thumb'; thumb.textContent = 'HEIC';
+  const info = document.createElement('div');
+  const n = document.createElement('div'); n.className = 'name'; n.textContent = name;
+  const meta = document.createElement('div'); meta.className = 'meta ' + cls; meta.textContent = status;
+  info.append(n, meta);
+  const action = document.createElement('div');
+  el.append(thumb, info, action);
+  list.prepend(el);
+  return { el, thumb, meta, action };
+}
+
+function updateButtons() {
+  zipBtn.disabled = results.length < 1;
+  clearBtn.disabled = list.children.length < 1;
+}
+
+zipBtn.addEventListener('click', async () => {
+  zipBtn.disabled = true; zipBtn.textContent = 'Zipping…';
+  const zip = new JSZip();
+  const used = new Set();
+  for (const r of results) {
+    let n = r.name, i = 1;
+    while (used.has(n)) n = r.name.replace(/\.jpg$/, `_${i++}.jpg`);
+    used.add(n);
+    zip.file(n, r.blob);
+  }
+  const blob = await zip.generateAsync({ type: 'blob' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'converted_jpgs.zip';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  zipBtn.textContent = 'Download all (ZIP)'; zipBtn.disabled = false;
+});
+
+clearBtn.addEventListener('click', () => {
+  results.length = 0; list.replaceChildren(); updateButtons();
+});
+</script>
+</body>
+</html>
