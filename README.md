@@ -60,8 +60,3 @@ HEIC / HEIF? ──yes──► heic2any decodes to an image
    Single file · ZIP · Merged PDF
 ```
 
-## Limitations
-
-- Output formats are limited to what browsers can export (no HEIC, AVIF or TIFF output).
-- Animated GIFs and multi-image HEIC files convert only their first frame.
-- Very large batches depend on the visitor's device memory.
