@@ -3,19 +3,20 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>HEIC to JPG Converter</title>
-<meta name="description" content="Free, private HEIC to JPG converter. Convert iPhone photos in your browser. No upload, batch and ZIP supported.">
-<meta property="og:title" content="HEIC to JPG Converter">
-<meta property="og:description" content="Convert iPhone photos to JPG right in your browser. Free, private, no upload.">
+<title>Image Converter – HEIC to JPG, PNG, WebP, PDF</title>
+<meta name="description" content="Free, private image converter. Turn HEIC, JPG, PNG, WebP and more into JPG, PNG, WebP or PDF in your browser. No upload, batch and ZIP supported.">
+<meta property="og:title" content="Image Converter – HEIC to JPG, PNG, WebP, PDF">
+<meta property="og:description" content="Convert photos between HEIC, JPG, PNG, WebP and PDF right in your browser. Free, private, no upload.">
 <meta property="og:image" content="https://shrey-iitk.github.io/heic2any/social-preview.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232563eb'/%3E%3Ccircle cx='22' cy='24' r='6' fill='%23fde68a'/%3E%3Cpath d='M6 54 24 32l12 14 8-9 14 17z' fill='white'/%3E%3C/svg%3E">
 <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <style>
   :root {
     --bg1: #0b1020; --bg2: #14224a;
-    --card: rgba(255,255,255,.07); --card-solid: #172042;
+    --card: rgba(255,255,255,.07);
     --text: #f1f5f9; --muted: #a8b3c7; --border: rgba(255,255,255,.14);
     --accent: #3b82f6; --accent2: #8b5cf6; --ok: #34d399; --err: #f87171;
   }
@@ -51,7 +52,7 @@
     -webkit-background-clip: text; background-clip: text; color: transparent;
     animation: rise .7s .1s ease both;
   }
-  .sub { margin: 0 auto; max-width: 520px; color: var(--muted); font-size: 1.05rem; animation: rise .7s .2s ease both; }
+  .sub { margin: 0 auto; max-width: 560px; color: var(--muted); font-size: 1.05rem; animation: rise .7s .2s ease both; }
   @keyframes rise { from { opacity: 0; transform: translateY(18px) } to { opacity: 1; transform: none } }
 
   /* ── Hero illustration ── */
@@ -91,11 +92,27 @@
 
   /* ── Controls ── */
   .controls {
-    display: flex; flex-wrap: wrap; gap: 14px; align-items: center; margin: 22px 0;
-    padding: 14px 18px; border-radius: 16px; background: var(--card); border: 1px solid var(--border);
+    display: grid; gap: 16px; margin: 22px 0;
+    padding: 16px 18px; border-radius: 16px; background: var(--card); border: 1px solid var(--border);
     animation: rise .8s .5s ease both;
   }
-  .controls label { display: flex; align-items: center; gap: 12px; font-size: .95rem; }
+  .row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .row-label { font-size: .85rem; color: var(--muted); min-width: 78px; }
+  .pills { display: flex; flex-wrap: wrap; gap: 8px; }
+  .pill { position: relative; cursor: pointer; }
+  .pill input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
+  .pill span {
+    display: block; padding: 8px 18px; border-radius: 999px; font-weight: 700; font-size: .9rem;
+    border: 1px solid var(--border); background: rgba(255,255,255,.04); transition: .15s;
+  }
+  .pill:hover span { border-color: rgba(147,197,253,.6); transform: translateY(-1px); }
+  .pill input:checked + span {
+    background: linear-gradient(135deg, var(--accent), var(--accent2)); border-color: transparent; color: #fff;
+    box-shadow: 0 6px 16px rgba(99,102,241,.4);
+  }
+  .pill input:focus-visible + span { outline: 2px solid #93c5fd; outline-offset: 2px; }
+  .qrow { display: flex; align-items: center; gap: 12px; font-size: .95rem; }
+  .qrow.off { opacity: .45; }
   input[type=range] { width: 170px; accent-color: var(--accent); }
   output { min-width: 28px; font-weight: 700; color: #93c5fd; }
   .spacer { flex: 1; }
@@ -108,6 +125,7 @@
   button:disabled { opacity: .4; cursor: not-allowed; box-shadow: none; }
   button.ghost { background: transparent; border: 1px solid var(--border); box-shadow: none; color: var(--text); }
   button.ghost:hover:not(:disabled) { background: var(--card); box-shadow: none; }
+  #pdfBtn { display: none; }
 
   /* ── Results ── */
   #list { display: grid; gap: 12px; }
@@ -156,6 +174,7 @@
     .item { grid-template-columns: 56px 1fr; }
     .item > div:last-child { grid-column: 1 / -1; }
     a.dl { display: block; text-align: center; }
+    .spacer { display: none; }
   }
 </style>
 </head>
@@ -165,8 +184,8 @@
 <main>
   <section class="hero">
     <span class="badge">✨ Free · Private · Runs in your browser</span>
-    <h1>HEIC → JPG Converter</h1>
-    <p class="sub">Turn iPhone photos into universal JPGs in seconds. Your files never leave your device.</p>
+    <h1>Image Converter</h1>
+    <p class="sub">Convert HEIC, JPG, PNG, WebP and more into JPG, PNG, WebP or PDF in seconds. Your files never leave your device.</p>
 
     <div class="scene" aria-hidden="true">
       <svg viewBox="0 0 560 220" xmlns="http://www.w3.org/2000/svg">
@@ -176,7 +195,7 @@
           <linearGradient id="gArrow" x1="0" x2="1"><stop offset="0" stop-color="#93c5fd"/><stop offset="1" stop-color="#c4b5fd"/></linearGradient>
         </defs>
 
-        <!-- HEIC photo -->
+        <!-- source photo -->
         <g class="float">
           <rect x="40" y="40" width="150" height="130" rx="18" fill="url(#gGrey)" stroke="rgba(255,255,255,.3)" stroke-width="2"/>
           <circle cx="82" cy="80" r="11" fill="#fde68a" opacity=".85"/>
@@ -185,7 +204,7 @@
           <text x="91" y="68" text-anchor="middle" font-size="13" font-weight="700" fill="#fff" font-family="system-ui,sans-serif">HEIC</text>
         </g>
 
-        <!-- Flowing arrow -->
+        <!-- flowing arrow -->
         <g>
           <path d="M215 110h110" stroke="url(#gArrow)" stroke-width="6" stroke-linecap="round" opacity=".35"/>
           <path d="M318 92l24 18-24 18" fill="none" stroke="url(#gArrow)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
@@ -194,13 +213,13 @@
           <circle class="dot" cx="215" cy="110" r="6" fill="#ddd6fe"/>
         </g>
 
-        <!-- JPG photo -->
+        <!-- target photo (label changes with chosen format) -->
         <g class="float d">
           <rect x="370" y="40" width="150" height="130" rx="18" fill="url(#gSky)" stroke="rgba(255,255,255,.4)" stroke-width="2"/>
           <circle class="sun" cx="418" cy="80" r="12" fill="#fde68a"/>
           <path d="M370 150 422 102l30 28 20-18 48 44v14a18 18 0 0 1-18 18H388a18 18 0 0 1-18-18z" fill="rgba(255,255,255,.42)"/>
-          <rect x="392" y="52" width="48" height="22" rx="11" fill="#0f172a" opacity=".55"/>
-          <text x="416" y="68" text-anchor="middle" font-size="13" font-weight="700" fill="#fff" font-family="system-ui,sans-serif">JPG</text>
+          <rect x="392" y="52" width="56" height="22" rx="11" fill="#0f172a" opacity=".55"/>
+          <text id="tgt" x="420" y="68" text-anchor="middle" font-size="13" font-weight="700" fill="#fff" font-family="system-ui,sans-serif">JPG</text>
         </g>
 
         <!-- sparkles -->
@@ -211,7 +230,7 @@
     </div>
   </section>
 
-  <div id="drop" tabindex="0" role="button" aria-label="Choose HEIC photos">
+  <div id="drop" tabindex="0" role="button" aria-label="Choose images to convert">
     <svg class="up-ico" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect x="6" y="14" width="52" height="38" rx="8" fill="rgba(147,197,253,.18)" stroke="#93c5fd" stroke-width="2.5"/>
       <circle cx="21" cy="28" r="5" fill="#fde68a"/>
@@ -219,19 +238,31 @@
       <circle cx="49" cy="15" r="11" fill="#3b82f6"/>
       <path d="M49 21v-12M44 14l5-5 5 5" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>
-    <strong>Drop HEIC / HEIF photos here, or click to choose</strong>
-    <span>You can select multiple files at once</span>
-    <input id="file" type="file" accept=".heic,.heif,image/heic,image/heif" multiple hidden>
+    <strong>Drop photos here, or click to choose</strong>
+    <span>HEIC, HEIF, JPG, PNG, WebP, GIF, BMP, AVIF · select many files at once</span>
+    <input id="file" type="file" accept="image/*,.heic,.heif" multiple hidden>
   </div>
 
   <div class="controls">
-    <label>Quality
-      <input id="quality" type="range" min="10" max="100" value="90">
-      <output id="qval">90</output>
-    </label>
-    <span class="spacer"></span>
-    <button id="zipBtn" disabled>⬇ Download all (ZIP)</button>
-    <button id="clearBtn" class="ghost" disabled>Clear</button>
+    <div class="row">
+      <span class="row-label">Convert to</span>
+      <div class="pills" id="fmts">
+        <label class="pill"><input type="radio" name="fmt" value="jpg" checked><span>JPG</span></label>
+        <label class="pill"><input type="radio" name="fmt" value="png"><span>PNG</span></label>
+        <label class="pill"><input type="radio" name="fmt" value="webp"><span>WebP</span></label>
+        <label class="pill"><input type="radio" name="fmt" value="pdf"><span>PDF</span></label>
+      </div>
+    </div>
+    <div class="row">
+      <label class="qrow" id="qrow">Quality
+        <input id="quality" type="range" min="10" max="100" value="90">
+        <output id="qval">90</output>
+      </label>
+      <span class="spacer"></span>
+      <button id="pdfBtn" disabled>📄 Merge all into one PDF</button>
+      <button id="zipBtn" disabled>⬇ Download all (ZIP)</button>
+      <button id="clearBtn" class="ghost" disabled>Clear</button>
+    </div>
   </div>
 
   <div id="list"></div>
@@ -243,14 +274,14 @@
       <p>Conversion happens on your device. Nothing is uploaded to any server.</p>
     </div>
     <div class="feat">
-      <svg viewBox="0 0 40 40" fill="none"><path d="M22 3 8 22h10l-3 15 17-21H21z" fill="#fbbf24"/></svg>
-      <h3>Fast &amp; batch</h3>
-      <p>Drop many photos at once and convert them one after another.</p>
+      <svg viewBox="0 0 40 40" fill="none"><rect x="4" y="6" width="20" height="16" rx="4" fill="#fbbf24"/><rect x="16" y="18" width="20" height="16" rx="4" fill="#f472b6"/><path d="M12 14h4m14 12h-4" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg>
+      <h3>Many formats</h3>
+      <p>HEIC, JPG, PNG, WebP and more in. JPG, PNG, WebP or PDF out.</p>
     </div>
     <div class="feat">
       <svg viewBox="0 0 40 40" fill="none"><rect x="6" y="10" width="28" height="22" rx="4" fill="#8b5cf6"/><path d="M6 14a4 4 0 0 1 4-4h6l3 4h11a4 4 0 0 1 4 4" stroke="#c4b5fd" stroke-width="2" fill="none"/><path d="M20 17v9m-4-4 4 4 4-4" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      <h3>One-click ZIP</h3>
-      <p>Download every converted JPG together in a single ZIP file.</p>
+      <h3>Batch, ZIP &amp; merged PDF</h3>
+      <p>Convert many photos, then grab them as a ZIP or one combined PDF.</p>
     </div>
   </section>
 
@@ -263,12 +294,34 @@ const fileInput = document.getElementById('file');
 const list = document.getElementById('list');
 const quality = document.getElementById('quality');
 const qval = document.getElementById('qval');
+const qrow = document.getElementById('qrow');
 const zipBtn = document.getElementById('zipBtn');
+const pdfBtn = document.getElementById('pdfBtn');
 const clearBtn = document.getElementById('clearBtn');
+const tgt = document.getElementById('tgt');
 
-const results = []; // {name, blob}
+const FORMATS = {
+  jpg:  { label: 'JPG',  ext: 'jpg',  mime: 'image/jpeg',      lossy: true  },
+  png:  { label: 'PNG',  ext: 'png',  mime: 'image/png',       lossy: false },
+  webp: { label: 'WEBP', ext: 'webp', mime: 'image/webp',      lossy: true  },
+  pdf:  { label: 'PDF',  ext: 'pdf',  mime: 'application/pdf', lossy: true  },
+};
 
+const results = []; // {name, blob, page:{data,w,h}|null}
+
+function currentFmt() { return document.querySelector('input[name=fmt]:checked').value; }
+
+function syncFormatUI() {
+  const key = currentFmt(), f = FORMATS[key];
+  tgt.textContent = f.label;
+  quality.disabled = !f.lossy;
+  qrow.classList.toggle('off', !f.lossy);
+  qval.textContent = f.lossy ? quality.value : 'Lossless';
+  pdfBtn.style.display = key === 'pdf' ? '' : 'none';
+}
+document.querySelectorAll('input[name=fmt]').forEach(r => r.addEventListener('change', syncFormatUI));
 quality.addEventListener('input', () => qval.textContent = quality.value);
+syncFormatUI();
 
 drop.addEventListener('click', () => fileInput.click());
 drop.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); } });
@@ -279,25 +332,91 @@ fileInput.addEventListener('change', () => { handleFiles(fileInput.files); fileI
 
 function fmtSize(b) { return b > 1048576 ? (b / 1048576).toFixed(2) + ' MB' : Math.round(b / 1024) + ' KB'; }
 function isHeic(f) { return /\.(heic|heif)$/i.test(f.name) || /image\/hei[cf]/i.test(f.type); }
+function isImage(f) { return isHeic(f) || /^image\//i.test(f.type) || /\.(jpe?g|png|webp|gif|bmp|avif)$/i.test(f.name); }
+function baseName(n) { return n.replace(/\.[^.]+$/, ''); }
+
+// Load any supported image into something drawable on a canvas
+async function loadSource(file) {
+  let blob = file;
+  if (isHeic(file)) {
+    let out = await heic2any({ blob: file, toType: 'image/png' });
+    blob = Array.isArray(out) ? out[0] : out; // multi-image HEIC: first frame
+  }
+  try {
+    return await createImageBitmap(blob);
+  } catch (e) {
+    return await new Promise((res, rej) => {
+      const img = new Image();
+      img.onload = () => res(img);
+      img.onerror = () => rej(new Error('Unsupported or unreadable image'));
+      img.src = URL.createObjectURL(blob);
+    });
+  }
+}
+
+const canvasToBlob = (c, type, q) => new Promise((res, rej) =>
+  c.toBlob(b => b ? res(b) : rej(new Error('Export failed')), type, q));
+
+function buildPdf(pages) {
+  const { jsPDF } = window.jspdf;
+  let doc = null;
+  for (const p of pages) {
+    const k = 842 / Math.max(p.w, p.h);       // longest side = 842pt (A4 height)
+    const pw = p.w * k, ph = p.h * k;
+    const orient = pw > ph ? 'l' : 'p';
+    if (!doc) doc = new jsPDF({ orientation: orient, unit: 'pt', format: [pw, ph], compress: true });
+    else doc.addPage([pw, ph], orient);
+    doc.addImage(p.data, 'JPEG', 0, 0, pw, ph, undefined, 'FAST');
+  }
+  return doc.output('blob');
+}
+
+async function convertOne(file, key, q) {
+  const f = FORMATS[key];
+  const src = await loadSource(file);
+  const w = src.naturalWidth || src.width, h = src.naturalHeight || src.height;
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  const ctx = c.getContext('2d');
+  if (key === 'jpg' || key === 'pdf') { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h); } // no transparency in JPG
+  ctx.drawImage(src, 0, 0);
+  if (src.close) src.close();
+
+  let blob, page = null;
+  if (key === 'pdf') {
+    page = { data: c.toDataURL('image/jpeg', q), w, h };
+    blob = buildPdf([page]);
+  } else {
+    blob = await canvasToBlob(c, f.mime, f.lossy ? q : undefined);
+    if (blob.type !== f.mime) throw new Error(f.label + ' export is not supported in this browser');
+  }
+
+  // small thumbnail
+  const s = Math.min(1, 136 / Math.max(w, h));
+  const t = document.createElement('canvas');
+  t.width = Math.max(1, Math.round(w * s)); t.height = Math.max(1, Math.round(h * s));
+  t.getContext('2d').drawImage(c, 0, 0, t.width, t.height);
+  return { blob, page, thumb: t.toDataURL('image/jpeg', .75) };
+}
 
 async function handleFiles(files) {
+  const key = currentFmt(), f = FORMATS[key];
   const q = parseInt(quality.value, 10) / 100;
   for (const file of Array.from(files)) {
-    if (!isHeic(file)) { addRow(file.name, 'Skipped: not a HEIC/HEIF file', 'err', false); continue; }
-    const row = addRow(file.name, 'Converting…', '', true);
+    if (!isImage(file)) { addRow(file.name, 'Skipped: not an image file', 'err', false); continue; }
+    const row = addRow(file.name, 'Converting to ' + f.label + '…', '', true);
     try {
-      let out = await heic2any({ blob: file, toType: 'image/jpeg', quality: q });
-      if (Array.isArray(out)) out = out[0]; // multi-image HEIC: take first frame
-      const jpgName = file.name.replace(/\.(heic|heif)$/i, '') + '.jpg';
-      const url = URL.createObjectURL(out);
-      results.push({ name: jpgName, blob: out });
+      const { blob, page, thumb } = await convertOne(file, key, q);
+      const outName = baseName(file.name) + '.' + f.ext;
+      const url = URL.createObjectURL(blob);
+      results.push({ name: outName, blob, page });
       row.thumb.classList.remove('busy');
-      row.thumb.style.backgroundImage = `url(${url})`;
+      row.thumb.style.backgroundImage = `url(${thumb})`;
       row.thumb.textContent = '';
-      row.meta.textContent = `${fmtSize(file.size)} → ${fmtSize(out.size)}`;
+      row.meta.textContent = `${fmtSize(file.size)} → ${fmtSize(blob.size)} · ${f.label}`;
       row.meta.className = 'meta ok';
       const a = document.createElement('a');
-      a.className = 'dl'; a.href = url; a.download = jpgName; a.textContent = 'Download JPG';
+      a.className = 'dl'; a.href = url; a.download = outName; a.textContent = 'Download ' + f.label;
       row.action.replaceChildren(a);
     } catch (err) {
       row.thumb.classList.remove('busy');
@@ -312,7 +431,7 @@ function addRow(name, status, cls = '', busy = false) {
   const el = document.createElement('div');
   el.className = 'item';
   const thumb = document.createElement('div'); thumb.className = 'thumb' + (busy ? ' busy' : '');
-  if (!busy) thumb.textContent = 'HEIC';
+  if (!busy) thumb.textContent = 'IMG';
   const info = document.createElement('div');
   const n = document.createElement('div'); n.className = 'name'; n.textContent = name;
   const meta = document.createElement('div'); meta.className = 'meta ' + cls; meta.textContent = status;
@@ -325,7 +444,15 @@ function addRow(name, status, cls = '', busy = false) {
 
 function updateButtons() {
   zipBtn.disabled = results.length < 1;
+  pdfBtn.disabled = results.filter(r => r.page).length < 2;
   clearBtn.disabled = list.children.length < 1;
+}
+
+function saveBlob(blob, name) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
 }
 
 zipBtn.addEventListener('click', async () => {
@@ -334,16 +461,28 @@ zipBtn.addEventListener('click', async () => {
   const used = new Set();
   for (const r of results) {
     let n = r.name, i = 1;
-    while (used.has(n)) n = r.name.replace(/\.jpg$/, `_${i++}.jpg`);
+    const dot = r.name.lastIndexOf('.');
+    const stem = r.name.slice(0, dot), ext = r.name.slice(dot);
+    while (used.has(n)) n = `${stem}_${i++}${ext}`;
     used.add(n);
     zip.file(n, r.blob);
   }
   const blob = await zip.generateAsync({ type: 'blob' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob); a.download = 'converted_jpgs.zip';
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  saveBlob(blob, 'converted_images.zip');
   zipBtn.textContent = '⬇ Download all (ZIP)'; zipBtn.disabled = false;
+});
+
+pdfBtn.addEventListener('click', () => {
+  pdfBtn.disabled = true; pdfBtn.textContent = 'Building PDF…';
+  setTimeout(() => {
+    try {
+      const pages = results.filter(r => r.page).map(r => r.page);
+      saveBlob(buildPdf(pages), 'merged.pdf');
+    } finally {
+      pdfBtn.textContent = '📄 Merge all into one PDF';
+      updateButtons();
+    }
+  }, 30);
 });
 
 clearBtn.addEventListener('click', () => {
