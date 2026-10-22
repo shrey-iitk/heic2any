@@ -19,8 +19,4 @@ It started as a Python script for converting folders on my laptop. Then I turned
 
 The biggest lesson was that a lot of useful tools don't need a backend. If the browser can do the work, your users' data stays with them, and you pay nothing for servers.
 
-If you work with iPhone photos, give it a try. I'd love your feedback and ideas for what to add next! 👇
-
-#WebDevelopment #JavaScript #GitHubPages #BuildInPublic #Productivity #OpenSource #Frontend
-
 ---
