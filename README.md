@@ -4,7 +4,7 @@ It started as a Python script for converting folders on my laptop. Then I turned
 
 🔗 Try it: https://shrey-iitk.github.io/heic2any/
 
-**What it does:**
+**What it does:** \
 🔄 Converts HEIC, HEIF, JPG, PNG, WebP, GIF, BMP and AVIF into JPG, PNG, WebP or PDF \
 🔒 100% private: conversion runs in your browser, so your photos never leave your device and nothing is uploaded \
 ⚡ Batch mode: drop in many photos at once \
