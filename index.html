@@ -4,60 +4,221 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>HEIC to JPG Converter</title>
+<meta name="description" content="Free, private HEIC to JPG converter. Convert iPhone photos in your browser. No upload, batch and ZIP supported.">
+<meta property="og:title" content="HEIC to JPG Converter">
+<meta property="og:description" content="Convert iPhone photos to JPG right in your browser. Free, private, no upload.">
+<meta property="og:image" content="https://shrey-iitk.github.io/heic2any/social-preview.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232563eb'/%3E%3Ccircle cx='22' cy='24' r='6' fill='%23fde68a'/%3E%3Cpath d='M6 54 24 32l12 14 8-9 14 17z' fill='white'/%3E%3C/svg%3E">
 <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <style>
   :root {
-    --bg: #f6f7f9; --card: #fff; --text: #1c1f24; --muted: #6b7280;
-    --accent: #2563eb; --accent-d: #1d4ed8; --border: #d9dde3; --ok: #16a34a; --err: #dc2626;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg: #14161a; --card: #1e2126; --text: #eceef1; --muted: #9aa1ab; --border: #353a42; }
+    --bg1: #0b1020; --bg2: #14224a;
+    --card: rgba(255,255,255,.07); --card-solid: #172042;
+    --text: #f1f5f9; --muted: #a8b3c7; --border: rgba(255,255,255,.14);
+    --accent: #3b82f6; --accent2: #8b5cf6; --ok: #34d399; --err: #f87171;
   }
   * { box-sizing: border-box; }
-  body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background: var(--bg); color: var(--text); }
-  main { max-width: 860px; margin: 0 auto; padding: 32px 16px 64px; }
-  h1 { margin: 0 0 4px; font-size: 1.6rem; }
-  p.sub { margin: 0 0 24px; color: var(--muted); }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; min-height: 100vh; color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: linear-gradient(160deg, var(--bg1), var(--bg2));
+    overflow-x: hidden;
+  }
+
+  /* ── Animated background blobs ── */
+  .blob { position: fixed; border-radius: 50%; filter: blur(80px); opacity: .45; z-index: 0; pointer-events: none; }
+  .b1 { width: 380px; height: 380px; background: #2563eb; top: -80px; left: -80px; animation: drift1 18s ease-in-out infinite; }
+  .b2 { width: 340px; height: 340px; background: #7c3aed; bottom: -60px; right: -60px; animation: drift2 22s ease-in-out infinite; }
+  .b3 { width: 260px; height: 260px; background: #06b6d4; top: 45%; left: 55%; opacity: .25; animation: drift1 26s ease-in-out infinite reverse; }
+  @keyframes drift1 { 0%,100% { transform: translate(0,0) } 50% { transform: translate(90px,70px) } }
+  @keyframes drift2 { 0%,100% { transform: translate(0,0) } 50% { transform: translate(-80px,-60px) } }
+
+  main { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 40px 18px 60px; }
+
+  /* ── Hero ── */
+  .hero { text-align: center; margin-bottom: 34px; }
+  .badge {
+    display: inline-block; padding: 6px 14px; border-radius: 999px; font-size: .8rem;
+    background: var(--card); border: 1px solid var(--border); color: var(--muted);
+    animation: rise .7s ease both;
+  }
+  h1 {
+    margin: 16px 0 10px; font-size: clamp(2rem, 6vw, 3.2rem); line-height: 1.1;
+    background: linear-gradient(90deg, #fff, #93c5fd 50%, #c4b5fd);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    animation: rise .7s .1s ease both;
+  }
+  .sub { margin: 0 auto; max-width: 520px; color: var(--muted); font-size: 1.05rem; animation: rise .7s .2s ease both; }
+  @keyframes rise { from { opacity: 0; transform: translateY(18px) } to { opacity: 1; transform: none } }
+
+  /* ── Hero illustration ── */
+  .scene { margin: 28px auto 0; width: min(560px, 100%); animation: rise .8s .3s ease both; }
+  .scene svg { width: 100%; height: auto; overflow: visible; }
+  .float { animation: float 4s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+  .float.d { animation-delay: -2s; }
+  @keyframes float { 0%,100% { transform: translateY(0) rotate(-2deg) } 50% { transform: translateY(-10px) rotate(2deg) } }
+  .dot { animation: flow 1.8s linear infinite; }
+  .dot:nth-of-type(2) { animation-delay: -.6s; }
+  .dot:nth-of-type(3) { animation-delay: -1.2s; }
+  @keyframes flow { 0% { transform: translateX(0); opacity: 0 } 15% { opacity: 1 } 85% { opacity: 1 } 100% { transform: translateX(120px); opacity: 0 } }
+  .sun { animation: pulse 3s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+  @keyframes pulse { 0%,100% { transform: scale(1) } 50% { transform: scale(1.18) } }
+  .spark { animation: twinkle 2.4s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+  .spark:nth-of-type(2) { animation-delay: -.8s; } .spark:nth-of-type(3) { animation-delay: -1.6s; }
+  @keyframes twinkle { 0%,100% { opacity: .2; transform: scale(.6) } 50% { opacity: 1; transform: scale(1.2) } }
+
+  /* ── Drop zone ── */
   #drop {
-    border: 2px dashed var(--border); border-radius: 14px; background: var(--card);
-    padding: 40px 16px; text-align: center; cursor: pointer; transition: .15s;
+    position: relative; text-align: center; cursor: pointer; padding: 44px 18px;
+    border-radius: 20px; background: var(--card); backdrop-filter: blur(10px);
+    border: 2px dashed rgba(255,255,255,.28); transition: .2s;
+    animation: rise .8s .4s ease both;
   }
-  #drop.over { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--card)); }
-  #drop strong { display: block; font-size: 1.05rem; margin-bottom: 4px; }
-  #drop span { color: var(--muted); font-size: .9rem; }
-  .controls { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; margin: 20px 0; }
-  .controls label { display: flex; align-items: center; gap: 10px; font-size: .95rem; }
-  input[type=range] { width: 180px; }
-  button {
-    background: var(--accent); color: #fff; border: 0; border-radius: 8px;
-    padding: 9px 16px; font-size: .95rem; cursor: pointer;
+  #drop::before {
+    content: ""; position: absolute; inset: -2px; border-radius: 20px; pointer-events: none;
+    box-shadow: 0 0 0 0 rgba(59,130,246,.5); animation: ring 2.6s ease-out infinite;
   }
-  button:hover { background: var(--accent-d); }
-  button:disabled { opacity: .5; cursor: not-allowed; }
-  button.ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
-  button.ghost:hover { background: var(--card); }
+  @keyframes ring { 0% { box-shadow: 0 0 0 0 rgba(59,130,246,.45) } 100% { box-shadow: 0 0 0 22px rgba(59,130,246,0) } }
+  #drop:hover, #drop.over, #drop:focus-visible { border-color: var(--accent); background: rgba(59,130,246,.12); transform: translateY(-3px); outline: none; }
+  #drop.over { transform: scale(1.02); }
+  .up-ico { width: 64px; height: 64px; margin: 0 auto 10px; display: block; animation: bob 2.2s ease-in-out infinite; }
+  @keyframes bob { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-8px) } }
+  #drop strong { display: block; font-size: 1.15rem; margin-bottom: 4px; }
+  #drop span { color: var(--muted); font-size: .92rem; }
+
+  /* ── Controls ── */
+  .controls {
+    display: flex; flex-wrap: wrap; gap: 14px; align-items: center; margin: 22px 0;
+    padding: 14px 18px; border-radius: 16px; background: var(--card); border: 1px solid var(--border);
+    animation: rise .8s .5s ease both;
+  }
+  .controls label { display: flex; align-items: center; gap: 12px; font-size: .95rem; }
+  input[type=range] { width: 170px; accent-color: var(--accent); }
+  output { min-width: 28px; font-weight: 700; color: #93c5fd; }
   .spacer { flex: 1; }
-  #list { display: grid; gap: 10px; }
-  .item {
-    display: grid; grid-template-columns: 64px 1fr auto; gap: 14px; align-items: center;
-    background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px;
+  button {
+    border: 0; border-radius: 10px; padding: 10px 18px; font-size: .95rem; font-weight: 600; cursor: pointer; color: #fff;
+    background: linear-gradient(135deg, var(--accent), var(--accent2)); transition: transform .15s, box-shadow .15s, opacity .15s;
+    box-shadow: 0 6px 18px rgba(59,130,246,.3);
   }
-  .thumb { width: 64px; height: 64px; border-radius: 8px; background: var(--bg) center/cover no-repeat; display: grid; place-items: center; color: var(--muted); font-size: .7rem; }
+  button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(99,102,241,.45); }
+  button:disabled { opacity: .4; cursor: not-allowed; box-shadow: none; }
+  button.ghost { background: transparent; border: 1px solid var(--border); box-shadow: none; color: var(--text); }
+  button.ghost:hover:not(:disabled) { background: var(--card); box-shadow: none; }
+
+  /* ── Results ── */
+  #list { display: grid; gap: 12px; }
+  .item {
+    display: grid; grid-template-columns: 68px 1fr auto; gap: 14px; align-items: center;
+    padding: 12px 14px; border-radius: 16px; background: var(--card); border: 1px solid var(--border);
+    animation: pop .45s cubic-bezier(.2,1.2,.4,1) both;
+  }
+  @keyframes pop { from { opacity: 0; transform: translateY(14px) scale(.96) } to { opacity: 1; transform: none } }
+  .thumb {
+    width: 68px; height: 68px; border-radius: 12px; display: grid; place-items: center; font-size: .7rem; color: var(--muted);
+    background: rgba(255,255,255,.08) center/cover no-repeat; position: relative; overflow: hidden;
+  }
+  .thumb.busy::after {
+    content: ""; width: 26px; height: 26px; border-radius: 50%;
+    border: 3px solid rgba(255,255,255,.2); border-top-color: var(--accent); animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg) } }
   .name { font-weight: 600; word-break: break-all; }
-  .meta { font-size: .85rem; color: var(--muted); }
+  .meta { font-size: .86rem; color: var(--muted); margin-top: 2px; }
   .meta.ok { color: var(--ok); } .meta.err { color: var(--err); }
-  a.dl { background: var(--accent); color: #fff; text-decoration: none; padding: 8px 14px; border-radius: 8px; font-size: .9rem; }
-  a.dl:hover { background: var(--accent-d); }
-  footer { margin-top: 32px; font-size: .85rem; color: var(--muted); text-align: center; }
+  a.dl {
+    text-decoration: none; color: #fff; padding: 9px 15px; border-radius: 10px; font-size: .9rem; font-weight: 600; white-space: nowrap;
+    background: linear-gradient(135deg, var(--accent), var(--accent2)); transition: transform .15s;
+  }
+  a.dl:hover { transform: translateY(-2px); }
+
+  /* ── Feature cards ── */
+  .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-top: 44px; }
+  .feat {
+    padding: 20px; border-radius: 18px; background: var(--card); border: 1px solid var(--border);
+    transition: transform .25s, border-color .25s; animation: rise .8s ease both;
+  }
+  .feat:nth-child(1) { animation-delay: .6s } .feat:nth-child(2) { animation-delay: .7s } .feat:nth-child(3) { animation-delay: .8s }
+  .feat:hover { transform: translateY(-6px); border-color: rgba(147,197,253,.6); }
+  .feat svg { width: 40px; height: 40px; margin-bottom: 10px; }
+  .feat h3 { margin: 0 0 4px; font-size: 1.05rem; }
+  .feat p { margin: 0; color: var(--muted); font-size: .92rem; line-height: 1.45; }
+
+  footer { margin-top: 40px; text-align: center; font-size: .85rem; color: var(--muted); }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+  @media (max-width: 520px) {
+    .item { grid-template-columns: 56px 1fr; }
+    .item > div:last-child { grid-column: 1 / -1; }
+    a.dl { display: block; text-align: center; }
+  }
 </style>
 </head>
 <body>
-<main>
-  <h1>HEIC → JPG Converter</h1>
-  <p class="sub">Convert iPhone photos to JPG right in your browser. Files never leave your device.</p>
+<div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
 
-  <div id="drop" tabindex="0">
+<main>
+  <section class="hero">
+    <span class="badge">✨ Free · Private · Runs in your browser</span>
+    <h1>HEIC → JPG Converter</h1>
+    <p class="sub">Turn iPhone photos into universal JPGs in seconds. Your files never leave your device.</p>
+
+    <div class="scene" aria-hidden="true">
+      <svg viewBox="0 0 560 220" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="gSky" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#60a5fa"/><stop offset="1" stop-color="#a78bfa"/></linearGradient>
+          <linearGradient id="gGrey" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#64748b"/><stop offset="1" stop-color="#334155"/></linearGradient>
+          <linearGradient id="gArrow" x1="0" x2="1"><stop offset="0" stop-color="#93c5fd"/><stop offset="1" stop-color="#c4b5fd"/></linearGradient>
+        </defs>
+
+        <!-- HEIC photo -->
+        <g class="float">
+          <rect x="40" y="40" width="150" height="130" rx="18" fill="url(#gGrey)" stroke="rgba(255,255,255,.3)" stroke-width="2"/>
+          <circle cx="82" cy="80" r="11" fill="#fde68a" opacity=".85"/>
+          <path d="M40 150 92 104l30 28 20-18 48 46v10a18 18 0 0 1-18 18H58a18 18 0 0 1-18-18z" fill="rgba(255,255,255,.28)"/>
+          <rect x="62" y="52" width="58" height="22" rx="11" fill="#0f172a" opacity=".6"/>
+          <text x="91" y="68" text-anchor="middle" font-size="13" font-weight="700" fill="#fff" font-family="system-ui,sans-serif">HEIC</text>
+        </g>
+
+        <!-- Flowing arrow -->
+        <g>
+          <path d="M215 110h110" stroke="url(#gArrow)" stroke-width="6" stroke-linecap="round" opacity=".35"/>
+          <path d="M318 92l24 18-24 18" fill="none" stroke="url(#gArrow)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle class="dot" cx="215" cy="110" r="6" fill="#fff"/>
+          <circle class="dot" cx="215" cy="110" r="6" fill="#bfdbfe"/>
+          <circle class="dot" cx="215" cy="110" r="6" fill="#ddd6fe"/>
+        </g>
+
+        <!-- JPG photo -->
+        <g class="float d">
+          <rect x="370" y="40" width="150" height="130" rx="18" fill="url(#gSky)" stroke="rgba(255,255,255,.4)" stroke-width="2"/>
+          <circle class="sun" cx="418" cy="80" r="12" fill="#fde68a"/>
+          <path d="M370 150 422 102l30 28 20-18 48 44v14a18 18 0 0 1-18 18H388a18 18 0 0 1-18-18z" fill="rgba(255,255,255,.42)"/>
+          <rect x="392" y="52" width="48" height="22" rx="11" fill="#0f172a" opacity=".55"/>
+          <text x="416" y="68" text-anchor="middle" font-size="13" font-weight="700" fill="#fff" font-family="system-ui,sans-serif">JPG</text>
+        </g>
+
+        <!-- sparkles -->
+        <path class="spark" d="M520 28l4 10 10 4-10 4-4 10-4-10-10-4 10-4z" fill="#fde68a"/>
+        <path class="spark" d="M352 22l3 7 7 3-7 3-3 7-3-7-7-3 7-3z" fill="#bfdbfe"/>
+        <path class="spark" d="M34 196l3 7 7 3-7 3-3 7-3-7-7-3 7-3z" fill="#ddd6fe"/>
+      </svg>
+    </div>
+  </section>
+
+  <div id="drop" tabindex="0" role="button" aria-label="Choose HEIC photos">
+    <svg class="up-ico" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="6" y="14" width="52" height="38" rx="8" fill="rgba(147,197,253,.18)" stroke="#93c5fd" stroke-width="2.5"/>
+      <circle cx="21" cy="28" r="5" fill="#fde68a"/>
+      <path d="M8 50l16-15 11 10 8-7 13 12" stroke="#93c5fd" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+      <circle cx="49" cy="15" r="11" fill="#3b82f6"/>
+      <path d="M49 21v-12M44 14l5-5 5 5" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
     <strong>Drop HEIC / HEIF photos here, or click to choose</strong>
     <span>You can select multiple files at once</span>
     <input id="file" type="file" accept=".heic,.heif,image/heic,image/heif" multiple hidden>
@@ -69,12 +230,31 @@
       <output id="qval">90</output>
     </label>
     <span class="spacer"></span>
-    <button id="zipBtn" disabled>Download all (ZIP)</button>
+    <button id="zipBtn" disabled>⬇ Download all (ZIP)</button>
     <button id="clearBtn" class="ghost" disabled>Clear</button>
   </div>
 
   <div id="list"></div>
-  <footer>Works offline-friendly after first load · Hosted on GitHub Pages</footer>
+
+  <section class="features">
+    <div class="feat">
+      <svg viewBox="0 0 40 40" fill="none"><rect x="8" y="17" width="24" height="17" rx="4" fill="#3b82f6"/><path d="M13 17v-4a7 7 0 0 1 14 0v4" stroke="#93c5fd" stroke-width="3" stroke-linecap="round"/><circle cx="20" cy="25" r="2.6" fill="#fff"/></svg>
+      <h3>100% private</h3>
+      <p>Conversion happens on your device. Nothing is uploaded to any server.</p>
+    </div>
+    <div class="feat">
+      <svg viewBox="0 0 40 40" fill="none"><path d="M22 3 8 22h10l-3 15 17-21H21z" fill="#fbbf24"/></svg>
+      <h3>Fast &amp; batch</h3>
+      <p>Drop many photos at once and convert them one after another.</p>
+    </div>
+    <div class="feat">
+      <svg viewBox="0 0 40 40" fill="none"><rect x="6" y="10" width="28" height="22" rx="4" fill="#8b5cf6"/><path d="M6 14a4 4 0 0 1 4-4h6l3 4h11a4 4 0 0 1 4 4" stroke="#c4b5fd" stroke-width="2" fill="none"/><path d="M20 17v9m-4-4 4 4 4-4" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <h3>One-click ZIP</h3>
+      <p>Download every converted JPG together in a single ZIP file.</p>
+    </div>
+  </section>
+
+  <footer>Made with ♥ · Hosted on GitHub Pages</footer>
 </main>
 
 <script>
@@ -91,7 +271,7 @@ const results = []; // {name, blob}
 quality.addEventListener('input', () => qval.textContent = quality.value);
 
 drop.addEventListener('click', () => fileInput.click());
-drop.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') fileInput.click(); });
+drop.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); } });
 ['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
 ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
 drop.addEventListener('drop', e => handleFiles(e.dataTransfer.files));
@@ -103,14 +283,15 @@ function isHeic(f) { return /\.(heic|heif)$/i.test(f.name) || /image\/hei[cf]/i.
 async function handleFiles(files) {
   const q = parseInt(quality.value, 10) / 100;
   for (const file of Array.from(files)) {
-    if (!isHeic(file)) { addRow(file.name, null, 'Skipped: not a HEIC/HEIF file', 'err'); continue; }
-    const row = addRow(file.name, null, 'Converting…');
+    if (!isHeic(file)) { addRow(file.name, 'Skipped: not a HEIC/HEIF file', 'err', false); continue; }
+    const row = addRow(file.name, 'Converting…', '', true);
     try {
       let out = await heic2any({ blob: file, toType: 'image/jpeg', quality: q });
       if (Array.isArray(out)) out = out[0]; // multi-image HEIC: take first frame
       const jpgName = file.name.replace(/\.(heic|heif)$/i, '') + '.jpg';
       const url = URL.createObjectURL(out);
       results.push({ name: jpgName, blob: out });
+      row.thumb.classList.remove('busy');
       row.thumb.style.backgroundImage = `url(${url})`;
       row.thumb.textContent = '';
       row.meta.textContent = `${fmtSize(file.size)} → ${fmtSize(out.size)}`;
@@ -119,6 +300,7 @@ async function handleFiles(files) {
       a.className = 'dl'; a.href = url; a.download = jpgName; a.textContent = 'Download JPG';
       row.action.replaceChildren(a);
     } catch (err) {
+      row.thumb.classList.remove('busy');
       row.meta.textContent = 'Failed: ' + (err && err.message ? err.message : 'could not convert');
       row.meta.className = 'meta err';
     }
@@ -126,10 +308,11 @@ async function handleFiles(files) {
   }
 }
 
-function addRow(name, thumbUrl, status, cls = '') {
+function addRow(name, status, cls = '', busy = false) {
   const el = document.createElement('div');
   el.className = 'item';
-  const thumb = document.createElement('div'); thumb.className = 'thumb'; thumb.textContent = 'HEIC';
+  const thumb = document.createElement('div'); thumb.className = 'thumb' + (busy ? ' busy' : '');
+  if (!busy) thumb.textContent = 'HEIC';
   const info = document.createElement('div');
   const n = document.createElement('div'); n.className = 'name'; n.textContent = name;
   const meta = document.createElement('div'); meta.className = 'meta ' + cls; meta.textContent = status;
@@ -160,7 +343,7 @@ zipBtn.addEventListener('click', async () => {
   a.href = URL.createObjectURL(blob); a.download = 'converted_jpgs.zip';
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-  zipBtn.textContent = 'Download all (ZIP)'; zipBtn.disabled = false;
+  zipBtn.textContent = '⬇ Download all (ZIP)'; zipBtn.disabled = false;
 });
 
 clearBtn.addEventListener('click', () => {
