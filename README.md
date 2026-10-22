@@ -1,11 +1,13 @@
+# LinkedIn Post: Image Converter
+
 📸 I got tired of iPhone photos (HEIC) not opening on Windows, so I built a free image converter. 🚀
 
 It started as a Python script for converting folders on my laptop. Then I turned it into a web app anyone can use, with no install and no sign-up.
 
 🔗 Try it: https://shrey-iitk.github.io/heic2any/
 
-What it does:
-🔄 Converts HEIC, HEIF, JPG, PNG, WebP, GIF, BMP and AVIF into JPG, PNG, WebP or PDF \\
+**What it does:**
+🔄 Converts HEIC, HEIF, JPG, PNG, WebP, GIF, BMP and AVIF into JPG, PNG, WebP or PDF
 🔒 100% private: conversion runs in your browser, so your photos never leave your device and nothing is uploaded
 ⚡ Batch mode: drop in many photos at once
 🎚️ Adjustable quality slider for smaller or sharper files
@@ -15,10 +17,18 @@ What it does:
 📱 Works on desktop and mobile
 💸 Free forever
 
-Built with: HTML, CSS, vanilla JavaScript, heic2any, jsPDF and JSZip, all hosted for free on GitHub Pages.
+**Built with:** HTML, CSS, vanilla JavaScript, heic2any, jsPDF and JSZip, all hosted for free on GitHub Pages.
 
-The biggest lesson was that a lot of useful tools don’t need a backend. If the browser can do the work, your users’ data stays with them, and you pay nothing for servers.
+The biggest lesson was that a lot of useful tools don't need a backend. If the browser can do the work, your users' data stays with them, and you pay nothing for servers.
 
-If you work with iPhone photos, give it a try. I’d love your feedback and ideas for what to add next! 👇
+If you work with iPhone photos, give it a try. I'd love your feedback and ideas for what to add next! 👇
 
 #WebDevelopment #JavaScript #GitHubPages #BuildInPublic #Productivity #OpenSource #Frontend
+
+---
+
+## Posting tips
+
+- Attach a short screen recording or screenshot of the page converting a photo. Posts with visuals get more reach.
+- For better reach, put the link in the first comment and change the line to "Link in the comments 👇".
+- Tag a friend or two who often deal with HEIC files.
